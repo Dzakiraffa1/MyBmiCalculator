@@ -1,0 +1,201 @@
+/* Existing CSS */
+
+.result-container {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background-color: rgb(50, 143, 7);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.4);
+    max-width: 400px;
+    width: 50%;
+    color: white;
+    transition: transform 0.5s ease-in-out;
+}
+
+.result-box {
+    text-align: center;
+}
+
+.result-box h2 {
+    margin-bottom: 20px;
+}
+
+.result-box p {
+    margin: 5px 0;
+}
+
+.container {
+    transition: transform 0.5s ease-in-out;
+}
+
+.calculate-again {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #dbf10f;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.calculate-again:hover {
+    background-color: #bada55;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(128, 128, 128, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid rgb(50, 143, 7);
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.alert-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: red;
+    color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    text-align: center;
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const calculateButton = document.querySelector('.submit');
+    const maleOption = document.querySelector('.gen:first-child p');
+    const femaleOption = document.querySelector('.gen:last-child p');
+    const genderOptions = document.querySelectorAll('.gen p');
+    let selectedGender = '';
+    let isLoading = false;
+
+    genderOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            genderOptions.forEach(opt => {
+                opt.style.backgroundColor = '#ffffff';
+                opt.style.color = '#000000';
+            });
+
+            if (option === maleOption) {
+                option.style.backgroundColor = 'blue';
+                option.style.color = 'white';
+                selectedGender = 'male';
+            } else {
+                option.style.backgroundColor = 'pink';
+                option.style.color = 'white';
+                selectedGender = 'female';
+            }
+        });
+    });
+
+    calculateButton.addEventListener('click', function() {
+        if (isLoading) return;
+        
+        const height = parseFloat(document.querySelectorAll('.hetwet input[type="number"]')[0].value);
+        const weight = parseFloat(document.querySelectorAll('.hetwet input[type="number"]')[1].value);
+        const age = parseFloat(document.querySelector('.age input[type="number"]').value);
+
+        if (!height || !weight || !age || !selectedGender) {
+            showAlert('Please fill all fields and select gender.');
+            return;
+        }
+
+        showLoading();
+
+        setTimeout(() => {
+            const bmiResult = (weight / ((height / 100) ** 2)).toFixed(2);
+            let bmiCategory = '';
+
+            if (bmiResult < 18.5) {
+                bmiCategory = 'Underweight';
+            } else if (bmiResult >= 18.5 && bmiResult < 24.9) {
+                bmiCategory = 'Normal';
+            } else if (bmiResult >= 25 && bmiResult < 29.9) {
+                bmiCategory = 'Overweight';
+            } else {
+                bmiCategory = 'Obese';
+            }
+
+            const resultContainer = document.createElement('div');
+            resultContainer.classList.add('result-container');
+            resultContainer.innerHTML = `
+                <div class="result-box">
+                    <h2>BMI Result</h2>
+                    <p>Your BMI is: ${bmiResult}</p>
+                    <p>Category: ${bmiCategory}</p>
+                    ${bmiCategory === 'Underweight' ? '<p id="underweight">Underweight: Less than 18.5</p>' : ''}
+                    ${bmiCategory === 'Normal' ? '<p id="normal">Normal: 18.5 - 24.9</p>' : ''}
+                    ${bmiCategory === 'Overweight' ? '<p id="overweight">Overweight: 25 - 29.9</p>' : ''}
+                    ${bmiCategory === 'Obese' ? '<p id="obese">Obese: 30 or greater</p>' : ''}
+                    <button class="calculate-again">Calculate Again</button>
+                </div>
+            `;
+            document.body.appendChild(resultContainer);
+
+            document.querySelector('.container').style.transform = 'translateX(-100%)';
+
+            document.querySelector('.calculate-again').addEventListener('click', function() {
+                document.body.removeChild(resultContainer);
+                document.querySelector('.container').style.transform = 'translateX(0)';
+                isLoading = false;
+            });
+
+            hideLoading();
+        }, 2000); // Simulate loading time
+    });
+
+    function showLoading() {
+        isLoading = true;
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.classList.add('loading-overlay');
+        loadingOverlay.innerHTML = `<div class="loading-spinner"></div>`;
+        document.body.appendChild(loadingOverlay);
+    }
+
+    function hideLoading() {
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (loadingOverlay) {
+            document.body.removeChild(loadingOverlay);
+        }
+        isLoading = false;
+    }
+
+    function showAlert(message) {
+        const alertBox = document.createElement('div');
+        alertBox.classList.add('alert-box');
+        alertBox.innerText = message;
+        document.body.appendChild(alertBox);
+
+        setTimeout(() => {
+            if (alertBox) {
+                document.body.removeChild(alertBox);
+            }
+        }, 3000);
+    }
+});
